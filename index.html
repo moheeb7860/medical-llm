@@ -1,0 +1,1466 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  FileText, Upload, Shield, AlertTriangle, AlertCircle, CheckCircle, 
+  Search, ArrowRight, Book, Activity, UserCheck, MessageSquare, 
+  Sparkles, RefreshCw, ChevronDown, ChevronUp, Printer, FileDown, 
+  HelpCircle, Trash2, Edit2, Check, Lock, HeartPulse, Info, Moon, Sun, 
+  ExternalLink, Layers, Plus, FileSpreadsheet, Clipboard, Calendar, Building, User, Bookmark
+} from 'lucide-react';
+
+// Fully structured, high-fidelity default sources representing complex real-world clinical reports
+const DEFAULT_REPORTS = [
+  {
+    id: 'report-lipid',
+    title: 'Lipid Panel - Fasting Bloodwork',
+    patientName: 'John Doe',
+    date: '2026-05-12',
+    facility: 'Metropolitan Diagnostic Laboratory',
+    rawText: `METROPOLITAN DIAGNOSTIC LABORATORY
+Patient: John Doe
+Date: May 12, 2026
+Report Type: Fasting Lipid Panel (Blood Test)
+Requested by: Dr. Alice Vance, MD
+
+TEST RESULTS:
+Total Cholesterol: 248 mg/dL  (Reference: < 200 mg/dL)  [HIGH]
+Triglycerides: 215 mg/dL     (Reference: < 150 mg/dL)  [HIGH]
+HDL (Good) Cholesterol: 38 mg/dL (Reference: > 40 mg/dL) [LOW]
+LDL (Bad) Cholesterol: 167 mg/dL  (Reference: < 100 mg/dL) [HIGH]
+VLDL Cholesterol: 43 mg/dL   (Reference: 5 - 40 mg/dL)  [HIGH]
+TC/HDL Ratio: 6.5            (Reference: < 5.0)        [HIGH]
+
+Clinical Notes: Patient fasted for 12 hours prior to venipuncture. Family history of coronary artery disease noted.`,
+    analysis: {
+      reportOverview: {
+        reportType: "Blood Test (Fasting Lipid Panel)",
+        date: "May 12, 2026",
+        patientName: "John Doe",
+        facility: "Metropolitan Diagnostic Laboratory"
+      },
+      executiveSummary: [
+        "Patient exhibits elevated total cholesterol, triglycerides, and bad LDL cholesterol levels.",
+        "HDL (good cholesterol) is below the recommended reference target of 40 mg/dL.",
+        "These metrics collectively signal a moderate to high cardiovascular lipid risk score.",
+        "Crucial organs are currently not in immediate crisis, but chronic elevation accelerates plaque build-up.",
+        "Overall clinical impression indicates Hyperlipidemia and mixed dyslipidemia."
+      ],
+      testResults: [
+        { parameter: "Total Cholesterol", result: "248 mg/dL", referenceRange: "< 200 mg/dL", status: "High" },
+        { parameter: "Triglycerides", result: "215 mg/dL", referenceRange: "< 150 mg/dL", status: "High" },
+        { parameter: "HDL (Good) Cholesterol", result: "38 mg/dL", referenceRange: "> 40 mg/dL", status: "Low" },
+        { parameter: "LDL (Bad) Cholesterol", result: "167 mg/dL", referenceRange: "< 100 mg/dL", status: "High" },
+        { parameter: "VLDL Cholesterol", result: "43 mg/dL", referenceRange: "5 - 40 mg/dL", status: "High" },
+        { parameter: "TC/HDL Ratio", result: "6.5", referenceRange: "< 5.0", status: "High" }
+      ],
+      riskAssessment: {
+        classification: "Moderate Risk",
+        explanation: "The classification of Moderate Risk was chosen because while there are multiple critical cardiovascular lipid elevations (LDL at 167 mg/dL and Triglycerides at 215 mg/dL), there are no acute markers signaling immediate emergency crisis. Long-term management is required to prevent vascular disease progression."
+      },
+      keyAbnormalFindings: [
+        {
+          testName: "LDL Cholesterol",
+          result: "167 mg/dL",
+          normalRange: "< 100 mg/dL",
+          clinicalSignificance: "LDL directly contributes to atherosclerotic plaque development in blood vessels.",
+          possibleReasons: "High saturated fat diet, genetic predisposition, sedentary lifestyle.",
+          severity: "Moderate"
+        },
+        {
+          testName: "Triglycerides",
+          result: "215 mg/dL",
+          normalRange: "< 150 mg/dL",
+          clinicalSignificance: "Triglycerides store unused calories and can increase risk of arterial hardening.",
+          possibleReasons: "Excessive carbohydrate or alcohol intake, insulin resistance, physical inactivity.",
+          severity: "Moderate"
+        },
+        {
+          testName: "HDL Cholesterol",
+          result: "38 mg/dL",
+          normalRange: "> 40 mg/dL",
+          clinicalSignificance: "HDL helps transport cholesterol out of arteries. Low levels limit defensive protective actions.",
+          possibleReasons: "Lack of regular exercise, smoking, metabolic syndrome.",
+          severity: "Mild"
+        }
+      ],
+      normalFindings: [
+        "No major metabolic panels were out of range besides lipid biomarkers.",
+        "All other physical properties were reported normal."
+      ],
+      clinicalInterpretation: "Your lipid panel shows a high amount of unhealthy fats circulating in your bloodstream. Your 'bad' cholesterol (LDL) and storage fats (triglycerides) are high, while your protective 'good' cholesterol (HDL) is low. Think of LDL as trucks carrying cargo that clogs pipelines, while HDL is the vacuum service cleaning it. Currently, your system has too many trucks and not enough vacuums.",
+      recommendedSpecialists: [
+        { specialistName: "Cardiologist", reason: "For a complete cardiovascular risk evaluation and preventative clinical profiling." },
+        { specialistName: "General Physician", reason: "To coordinate metabolic optimization, dietary therapy, and potential statin prescription initiation." }
+      ],
+      precautions: {
+        diet: "Adopt a Mediterranean dietary pattern rich in soluble fiber (oats, beans), omega-3 fats, and minimize saturated and trans fats.",
+        hydration: "Maintain stable hydration of 2-3 liters of water daily to support general metabolic filtration.",
+        physicalActivity: "Aim for 150 minutes of moderate-intensity aerobic exercise (like brisk walking) weekly, which is proven to elevate HDL.",
+        sleep: "Prioritize 7-9 hours of restful sleep daily to support healthy lipid metabolism and stress hormones.",
+        monitoring: "Monitor fasting blood pressure weekly and fasting blood glucose during your next clinical visit.",
+        lifestyle: "Eliminate any smoking habits and limit refined sugar and processed carbohydrate consumption."
+      },
+      advisory: {
+        followUpRecommended: "Clinical consultation with your doctor is recommended within 2 to 4 weeks.",
+        repeatTestsNeeded: "Re-evaluate fasting lipid panel after 3 months of strict nutritional and lifestyle changes.",
+        symptomMonitoring: "Monitor for any exertional shortness of breath, heavy chest tightness, or unusual fatigue.",
+        urgentEvaluationAdvisable: "Seek urgent medical care if you experience sharp chest pain, pain radiating to your left arm, or sudden speech changes."
+      },
+      questionsForDoctor: [
+        "What is my absolute ten-year cardiovascular event risk score based on these numbers?",
+        "Should we initiate medication (like a statin) immediately, or can we attempt dietary modifications for 3 months first?",
+        "Are there other secondary causes of dyslipidemia we should test for, such as hypothyroidism?",
+        "Would a coronary calcium scan be helpful to visualize if any physical blockage is starting to develop?",
+        "How do my triglyceride levels impact my pancreatic health?"
+      ],
+      medicalTermsExplained: [
+        { term: "Lipid", explanation: "Fats and fat-like substances circulating in the blood that serve as energy resources and cellular building blocks." },
+        { term: "Atherosclerosis", explanation: "The process of plaque building up and hardening inside the arteries, narrowing the path for oxygen-rich blood flow." },
+        { term: "Triglycerides", explanation: "The most common form of fat found in the body, representing stored energy derived from excess calories." }
+      ],
+      oneMinuteSummary: {
+        overallHealthStatus: "Active Mixed Dyslipidemia indicating excess vascular lipids and cardiovascular stress.",
+        riskLevel: "Moderate Risk",
+        mainFindings: "High Total Cholesterol (248), high LDL (167), low HDL (38), and high Triglycerides (215).",
+        immediateConcerns: "Long term artery hardening and cardiovascular stress if left unmanaged.",
+        recommendedSpecialists: "General Physician & Cardiologist",
+        keyPrecautions: "Reduce dietary saturated fats, increase active aerobic exercise to raise HDL, and avoid simple carbohydrates.",
+        suggestedFollowUp: "Fasting lipid panel retest in 12 weeks with clinical checkup in 2-4 weeks."
+      },
+      confidenceRating: "High"
+    }
+  },
+  {
+    id: 'report-cmp',
+    title: 'Comprehensive Metabolic Panel (CMP)',
+    patientName: 'Jane Smith',
+    date: '2026-06-03',
+    facility: 'Valley Health Pathology',
+    rawText: `VALLEY HEALTH HOSPITAL CLINICAL PATHOLOGY
+Patient: Jane Smith
+Date: June 3, 2026
+Report Type: Comprehensive Metabolic Panel (CMP)
+
+TEST RESULTS:
+Glucose: 104 mg/dL             (Reference: 70 - 99 mg/dL)   [HIGH]
+BUN: 14 mg/dL                 (Reference: 7 - 20 mg/dL)    [NORMAL]
+Creatinine: 0.85 mg/dL        (Reference: 0.57 - 1.11 mg/dL) [NORMAL]
+Sodium: 139 mEq/L             (Reference: 135 - 145 mEq/L) [NORMAL]
+Potassium: 4.1 mEq/L          (Reference: 3.5 - 5.2 mEq/L) [NORMAL]
+ALT (SGPT): 84 IU/L          (Reference: 7 - 56 IU/L)     [HIGH]
+AST (SGOT): 62 IU/L          (Reference: 10 - 40 IU/L)    [HIGH]
+Alkaline Phosphatase: 110 IU/L (Reference: 44 - 147 IU/L)  [NORMAL]
+Bilirubin, Total: 1.1 mg/dL   (Reference: 0.2 - 1.2 mg/dL) [NORMAL]
+Total Protein: 7.2 g/dL       (Reference: 6.4 - 8.3 g/dL)  [NORMAL]
+Albumin: 4.4 g/dL             (Reference: 3.5 - 5.0 g/dL)  [NORMAL]`,
+    analysis: {
+      reportOverview: {
+        reportType: "Comprehensive Metabolic Panel (CMP)",
+        date: "June 3, 2026",
+        patientName: "Jane Smith",
+        facility: "Valley Health Hospital Clinical Pathology"
+      },
+      executiveSummary: [
+        "Patient exhibits isolated elevations in transaminases: ALT (84 IU/L) and AST (62 IU/L).",
+        "Renal markers (BUN and Creatinine) are well within optimal reference target ranges.",
+        "Electrolytes (Sodium, Potassium) and overall protein statuses (Albumin) are fully normal.",
+        "Serum glucose is slightly elevated at 104 mg/dL.",
+        "Clinical impression highlights mild to moderate hepatic inflammatory strain and impaired fasting glucose."
+      ],
+      testResults: [
+        { parameter: "ALT (SGPT)", result: "84 IU/L", referenceRange: "7 - 56 IU/L", status: "High" },
+        { parameter: "AST (SGOT)", result: "62 IU/L", referenceRange: "10 - 40 IU/L", status: "High" },
+        { parameter: "Glucose", result: "104 mg/dL", referenceRange: "70 - 99 mg/dL", status: "High" },
+        { parameter: "BUN", result: "14 mg/dL", referenceRange: "7 - 20 mg/dL", status: "Normal" },
+        { parameter: "Creatinine", result: "0.85 mg/dL", referenceRange: "0.57 - 1.11 mg/dL", status: "Normal" },
+        { parameter: "Sodium", result: "139 mEq/L", referenceRange: "135 - 145 mEq/L", status: "Normal" },
+        { parameter: "Potassium", result: "4.1 mEq/L", referenceRange: "3.5 - 5.2 mEq/L", status: "Normal" },
+        { parameter: "Alkaline Phosphatase", result: "110 IU/L", referenceRange: "44 - 147 IU/L", status: "Normal" },
+        { parameter: "Bilirubin, Total", result: "1.1 mg/dL", referenceRange: "0.2 - 1.2 mg/dL", status: "Normal" },
+        { parameter: "Total Protein", result: "7.2 g/dL", referenceRange: "6.4 - 8.3 g/dL", status: "Normal" },
+        { parameter: "Albumin", result: "4.4 g/dL", referenceRange: "3.5 - 5.0 g/dL", status: "Normal" }
+      ],
+      riskAssessment: {
+        classification: "Moderate Risk",
+        explanation: "The classification of Moderate Risk was designated because ALT and AST are elevated past their reference targets, signifying cellular inflammation of the liver, alongside early signs of high blood sugar (104 mg/dL). However, other critical indicators like Bilirubin, Albumin, and Alkaline Phosphatase remain healthy, proving liver function itself is preserved."
+      },
+      keyAbnormalFindings: [
+        {
+          testName: "ALT (Alanine Aminotransferase)",
+          result: "84 IU/L",
+          normalRange: "7 - 56 IU/L",
+          clinicalSignificance: "An enzyme found mostly in liver cells. When liver cells are stressed or injured, they leak ALT into the bloodstream.",
+          possibleReasons: "Fatty liver changes (NAFLD), medications/supplements, alcohol strain, mild viral exposure.",
+          severity: "Moderate"
+        },
+        {
+          testName: "AST (Aspartate Aminotransferase)",
+          result: "62 IU/L",
+          normalRange: "10 - 40 IU/L",
+          clinicalSignificance: "An enzyme in liver and muscle cells. Elevated levels indicate tissue strain, especially in combination with high ALT.",
+          possibleReasons: "Hepatic metabolic strain, intense muscle exercise, or liver metabolic overload.",
+          severity: "Moderate"
+        },
+        {
+          testName: "Glucose",
+          result: "104 mg/dL",
+          normalRange: "70 - 99 mg/dL",
+          clinicalSignificance: "A primary energy resource indicator. Elevated levels indicate impaired fasting glucose.",
+          possibleReasons: "Insulin resistance, prediabetes, stress levels, recent high-carbohydrate intake.",
+          severity: "Mild"
+        }
+      ],
+      normalFindings: [
+        "Kidney function markers (BUN and Creatinine) are in perfect balance.",
+        "Total bilirubin and alkaline phosphatase are healthy, showing bile ducts are unblocked.",
+        "Nutritional protein markers (Albumin, Total Protein) demonstrate robust cellular synthesis."
+      ],
+      clinicalInterpretation: "Your report is highly reassuring regarding your kidney health, proteins, and electrolytes. However, it displays elevated levels of AST and ALT, which are 'leakage' proteins found inside liver cells. Think of these cells as tiny balloons holding water. When the liver is working under structural stress, some cells leak AST and ALT into the blood. Additionally, your fasting glucose indicates mild blood sugar elevation, which is common in early metabolic resistance.",
+      recommendedSpecialists: [
+        { specialistName: "Gastroenterologist / Hepatologist", reason: "For specific imaging of the liver (like ultrasound) and detailed exploration of non-alcoholic fatty liver profiles." },
+        { specialistName: "Endocrinologist", reason: "To guide and manage impaired glucose/prediabetes prevention strategies if values remain elevated." }
+      ],
+      precautions: {
+        diet: "Adopt a clean, low-sugar diet focusing on leafy greens, cruciferous vegetables, and minimizing refined fructose/sugars.",
+        hydration: "Drink adequate plain water to reduce metabolic toxicity burdens.",
+        physicalActivity: "Incorporate regular metabolic activity to lower fat deposition within liver cells and increase insulin sensitivity.",
+        sleep: "Aim for consistent sleep cycles to optimize liver repair cycles and cortisol management.",
+        monitoring: "Monitor fasting blood glucose or HbA1c, as metabolic syndrome strongly correlates with fatty liver inflammation.",
+        lifestyle: "Strictly avoid alcoholic beverages and discontinue any unprescribed supplements or excessive acetaminophen usage."
+      },
+      advisory: {
+        followUpRecommended: "Schedule a physical evaluation with a primary care clinician within 2 to 3 weeks.",
+        repeatTestsNeeded: "A repeat liver enzyme check in 4-6 weeks is optimal to check if inflammation is resolving.",
+        symptomMonitoring: "Monitor for symptoms such as jaundice (yellowing of eyes/skin), dark amber urine, or right upper abdominal discomfort.",
+        urgentEvaluationAdvisable: "Seek immediate emergency attention if severe abdominal swelling, unyielding vomiting, or confusion develops."
+      },
+      questionsForDoctor: [
+        "Could any of my current OTC pain relievers or vitamins be causing this liver enzyme leakage?",
+        "Do you recommend getting a liver ultrasound to check for fatty liver (hepatic steatosis)?",
+        "Could my fasting glucose of 104 mg/dL mean insulin resistance is contributing to these liver levels?",
+        "Are my liver proteins healthy enough that we can rule out advanced scarring?",
+        "How long do you recommend we wait before retesting AST and ALT?"
+      ],
+      medicalTermsExplained: [
+        { term: "Transaminases", explanation: "Enzymes (ALT and AST) that facilitate cellular chemical reactions in the liver and muscle tissues." },
+        { term: "Impaired Fasting Glucose", explanation: "A condition where fasting blood sugar levels are consistently higher than normal, but not yet high enough to be classified as diabetes." },
+        { term: "Hepatic", explanation: "Relating to or affecting the liver." }
+      ],
+      oneMinuteSummary: {
+        overallHealthStatus: "Mild to moderate cellular liver inflammation (hepatic transaminitis) and impaired fasting blood glucose.",
+        riskLevel: "Moderate Risk",
+        mainFindings: "Elevated liver enzymes (ALT 84, AST 62) and fasting glucose of 104 mg/dL.",
+        immediateConcerns: "Fat accumulation in the liver or metabolic insulin resistance if unchecked.",
+        recommendedSpecialists: "Primary Care Physician, Hepatologist & Endocrinologist",
+        keyPrecautions: "Avoid alcohol, minimize over-the-counter pain pills, cut down sugars, and request a liver scan.",
+        suggestedFollowUp: "Recheck hepatic enzymes and blood glucose in 4-6 weeks."
+      },
+      confidenceRating: "High"
+    }
+  }
+];
+
+export default function App() {
+  const [reports, setReports] = useState(DEFAULT_REPORTS);
+  const [activeReportId, setActiveReportId] = useState(DEFAULT_REPORTS[0].id);
+  const [selectedReportIds, setSelectedReportIds] = useState([DEFAULT_REPORTS[0].id]);
+  const [activeTab, setActiveTab] = useState('summary');
+  
+  // Custom uploaded/added reports states
+  const [customReportText, setCustomReportText] = useState('');
+  const [customReportTitle, setCustomReportTitle] = useState('New Medical Record');
+  const [customPatient, setCustomPatient] = useState('John Doe');
+  const [customDate, setCustomDate] = useState('2026-06-28');
+  const [customFacility, setCustomFacility] = useState('Central Medical Lab');
+  
+  // AI states
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [userApiKey, setUserApiKey] = useState('');
+  
+  // Chat Companion states
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([
+    { role: 'assistant', text: "Hello! I am your clinical notebook workspace companion. I've preloaded standard diagnostic panels. You can tick the sources on the left side to include them in our grounding pool, then ask me anything about your parameters!" }
+  ]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [glossarySearch, setGlossarySearch] = useState('');
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [editSourceMode, setEditSourceMode] = useState(false);
+  
+  const activeReport = reports.find(r => r.id === activeReportId) || reports[0];
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setIsDarkMode(true);
+    }
+  }, []);
+
+  const toggleGroundingSource = (id) => {
+    setSelectedReportIds(prev => {
+      if (prev.includes(id)) {
+        if (prev.length === 1) return prev; // Keep at least one selected
+        return prev.filter(item => item !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const runAIDocumentAnalysis = async (rawText, title, patient, dateVal, facilityVal) => {
+    setIsGenerating(true);
+    setApiError('');
+    try {
+      const systemPrompt = `You are an expert Medical Report Intelligence Assistant specializing in the analysis of medical reports.
+Your purpose is to transform complex medical reports into clear, accurate, structured, and patient-friendly summaries.
+Analyze only the information contained in the provided report. Never invent findings, diagnoses, or treatments.
+You must return the analysis strictly as a JSON object matching the requested schema. If information is missing or not applicable, say "Not specified in report" or use healthy logical placeholders. Do not leave fields empty. Ensure all fields in the JSON match the schema perfectly.`;
+
+      const userQuery = `Analyze the following medical report text and output a complete structured analysis in JSON. Here is the report text:
+---
+${rawText}
+---`;
+
+      const apiKey = userApiKey || ""; 
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      const responseSchema = {
+        type: "OBJECT",
+        properties: {
+          reportOverview: {
+            type: "OBJECT",
+            properties: {
+              reportType: { type: "STRING" },
+              date: { type: "STRING" },
+              patientName: { type: "STRING" },
+              facility: { type: "STRING" }
+            },
+            required: ["reportType", "date", "patientName", "facility"]
+          },
+          executiveSummary: {
+            type: "ARRAY",
+            items: { type: "STRING" }
+          },
+          testResults: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                parameter: { type: "STRING" },
+                result: { type: "STRING" },
+                referenceRange: { type: "STRING" },
+                status: { type: "STRING", enum: ["Normal", "Borderline", "High", "Low"] }
+              },
+              required: ["parameter", "result", "referenceRange", "status"]
+            }
+          },
+          riskAssessment: {
+            type: "OBJECT",
+            properties: {
+              classification: { type: "STRING", enum: ["Low Risk", "Moderate Risk", "High Risk", "Requires Immediate Medical Attention"] },
+              explanation: { type: "STRING" }
+            },
+            required: ["classification", "explanation"]
+          },
+          keyAbnormalFindings: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                testName: { type: "STRING" },
+                result: { type: "STRING" },
+                normalRange: { type: "STRING" },
+                clinicalSignificance: { type: "STRING" },
+                possibleReasons: { type: "STRING" },
+                severity: { type: "STRING", enum: ["Mild", "Moderate", "Severe"] }
+              },
+              required: ["testName", "result", "normalRange", "clinicalSignificance", "possibleReasons", "severity"]
+            }
+          },
+          normalFindings: {
+            type: "ARRAY",
+            items: { type: "STRING" }
+          },
+          clinicalInterpretation: { type: "STRING" },
+          recommendedSpecialists: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                specialistName: { type: "STRING" },
+                reason: { type: "STRING" }
+              },
+              required: ["specialistName", "reason"]
+            }
+          },
+          precautions: {
+            type: "OBJECT",
+            properties: {
+              diet: { type: "STRING" },
+              hydration: { type: "STRING" },
+              physicalActivity: { type: "STRING" },
+              sleep: { type: "STRING" },
+              monitoring: { type: "STRING" },
+              lifestyle: { type: "STRING" }
+            },
+            required: ["diet", "hydration", "physicalActivity", "sleep", "monitoring", "lifestyle"]
+          },
+          advisory: {
+            type: "OBJECT",
+            properties: {
+              followUpRecommended: { type: "STRING" },
+              repeatTestsNeeded: { type: "STRING" },
+              symptomMonitoring: { type: "STRING" },
+              urgentEvaluationAdvisable: { type: "STRING" }
+            },
+            required: ["followUpRecommended", "repeatTestsNeeded", "symptomMonitoring", "urgentEvaluationAdvisable"]
+          },
+          questionsForDoctor: {
+            type: "ARRAY",
+            items: { type: "STRING" }
+          },
+          medicalTermsExplained: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                term: { type: "STRING" },
+                explanation: { type: "STRING" }
+              },
+              required: ["term", "explanation"]
+            }
+          },
+          oneMinuteSummary: {
+            type: "OBJECT",
+            properties: {
+              overallHealthStatus: { type: "STRING" },
+              riskLevel: { type: "STRING" },
+              mainFindings: { type: "STRING" },
+              immediateConcerns: { type: "STRING" },
+              recommendedSpecialists: { type: "STRING" },
+              keyPrecautions: { type: "STRING" },
+              suggestedFollowUp: { type: "STRING" }
+            },
+            required: ["overallHealthStatus", "riskLevel", "mainFindings", "immediateConcerns", "recommendedSpecialists", "keyPrecautions", "suggestedFollowUp"]
+          },
+          confidenceRating: { type: "STRING", enum: ["High", "Moderate", "Limited"] }
+        },
+        required: [
+          "reportOverview", "executiveSummary", "testResults", "riskAssessment",
+          "keyAbnormalFindings", "normalFindings", "clinicalInterpretation",
+          "recommendedSpecialists", "precautions", "advisory", "questionsForDoctor",
+          "medicalTermsExplained", "oneMinuteSummary", "confidenceRating"
+        ]
+      };
+
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema
+        },
+        systemInstruction: {
+          parts: [{ text: systemPrompt }]
+        }
+      };
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Workspace AI services returned error status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const rawJson = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      if (!rawJson) {
+        throw new Error("Unable to parse a clean clinical analysis template. Try adjusting input.");
+      }
+
+      const parsedAnalysis = JSON.parse(rawJson);
+      const newReportId = `source-${Date.now()}`;
+      const newReport = {
+        id: newReportId,
+        title: title || parsedAnalysis.reportOverview.reportType || "Analyzed Lab Work",
+        patientName: patient || parsedAnalysis.reportOverview.patientName || "Jane Doe",
+        date: dateVal || parsedAnalysis.reportOverview.date || "2026-06-28",
+        facility: facilityVal || parsedAnalysis.reportOverview.facility || "Central Labs",
+        rawText: rawText,
+        analysis: parsedAnalysis
+      };
+
+      setReports(prev => [newReport, ...prev]);
+      setSelectedReportIds(prev => [...prev, newReportId]);
+      setActiveReportId(newReportId);
+      setIsUploadModalOpen(false);
+      setCustomReportText('');
+    } catch (err) {
+      setApiError(err.message || "Something went wrong. Ensure you have a working connection or API key.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleChatQuery = async (e) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim() || isChatLoading) return;
+
+    const queryText = chatInput;
+    setChatInput('');
+    const userMsg = { role: 'user', text: queryText };
+    setChatMessages(prev => [...prev, userMsg]);
+    setIsChatLoading(true);
+
+    try {
+      // Collect all selected source materials
+      const groundedReports = reports.filter(r => selectedReportIds.includes(r.id));
+      if (groundedReports.length === 0) {
+        setChatMessages(prev => [...prev, { role: 'assistant', text: "Please select at least one document source on the left to ground my medical knowledge base!" }]);
+        setIsChatLoading(false);
+        return;
+      }
+
+      // Structure context from the selected medical sources
+      let sourcesContext = "Here are the selected medical reports to ground your expert answers in:\n\n";
+      groundedReports.forEach((rep, index) => {
+        sourcesContext += `SOURCE RECORD #${index + 1}: ${rep.title}\n`;
+        sourcesContext += `Patient: ${rep.patientName} | Date: ${rep.date} | Facility: ${rep.facility}\n`;
+        sourcesContext += `Raw Text:\n${rep.rawText}\n\n`;
+        sourcesContext += `Expert Structural Clinical Analysis:\n${JSON.stringify(rep.analysis)}\n`;
+        sourcesContext += `------------------------------------\n\n`;
+      });
+
+      const instruction = `You are an expert Clinical Notebook Assistant similar to NotebookLM but custom-grounded in specific clinical reports.
+Your answers MUST rely ONLY on the uploaded files context provided. 
+If the patient asks questions about their health, answer clearly and define any medical terminology used. 
+If you can't find an answer based strictly on the provided reports, clearly inform the user and say you lack clinical evidence. 
+NEVER prescribe, change dose amounts, or tell them to discontinue existing treatments. Explicitly suggest that they bring these queries to their doctor's attention.`;
+
+      const payload = {
+        contents: [
+          { role: 'user', parts: [{ text: `${sourcesContext}\n\nUser Question: ${queryText}` }] }
+        ],
+        systemInstruction: {
+          parts: [{ text: instruction }]
+        }
+      };
+
+      const apiKey = userApiKey || "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("Workspace LLM API offline or key incorrect.");
+
+      const resJson = await response.json();
+      const aiResponseText = resJson.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I could not synthesize an answer.";
+
+      setChatMessages(prev => [...prev, { role: 'assistant', text: aiResponseText }]);
+    } catch (err) {
+      setChatMessages(prev => [...prev, { role: 'assistant', text: `An error occurred: ${err.message}. Please verify your API Key.` }]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  const runPromptSuggestion = (prompt) => {
+    setChatInput(prompt);
+  };
+
+  const removeReport = (id, e) => {
+    e.stopPropagation();
+    if (reports.length === 1) {
+      return; // Must retain at least one report
+    }
+    const filtered = reports.filter(r => r.id !== id);
+    setReports(filtered);
+    setSelectedReportIds(prev => prev.filter(item => item !== id));
+    if (activeReportId === id) {
+      setActiveReportId(filtered[0].id);
+    }
+  };
+
+  const loadSimulatedLabSample = () => {
+    const customTestText = `HEALTH PARTNERS BIOLABS
+Patient: Marcus Aurelius
+Date: June 15, 2026
+Report Type: Basic Thyroid Panel (Bloodwork)
+Facility: Health Partners Labs
+
+TEST RESULTS:
+TSH (Thyroid Stimulating Hormone): 5.82 uIU/mL (Reference: 0.45 - 4.50 uIU/mL) [HIGH]
+Free T4 (Thyroxine): 0.78 ng/dL (Reference: 0.82 - 1.77 ng/dL) [LOW]
+Free T3: 2.1 pg/mL (Reference: 2.0 - 4.4 pg/mL) [NORMAL]
+
+Clinical Notes: Patient reports persistent sluggish fatigue, cold sensitivity, and dry skin.`;
+    setCustomReportText(customTestText);
+    setCustomReportTitle("Thyroid panel (Biolabs)");
+    setCustomPatient("Marcus Aurelius");
+    setCustomDate("2026-06-15");
+    setCustomFacility("Health Partners Biolabs");
+  };
+
+  const getRiskStyles = (classification) => {
+    switch (classification) {
+      case "Low Risk":
+        return { bg: "bg-emerald-50 dark:bg-emerald-950/20", border: "border-emerald-200 dark:border-emerald-800", text: "text-emerald-700 dark:text-emerald-400", fill: "#10b981" };
+      case "Moderate Risk":
+        return { bg: "bg-amber-50 dark:bg-amber-950/20", border: "border-amber-200 dark:border-amber-800", text: "text-amber-700 dark:text-amber-400", fill: "#f59e0b" };
+      case "High Risk":
+        return { bg: "bg-orange-50 dark:bg-orange-950/20", border: "border-orange-200 dark:border-orange-800", text: "text-orange-700 dark:text-orange-400", fill: "#f97316" };
+      case "Requires Immediate Medical Attention":
+        return { bg: "bg-rose-50 dark:bg-rose-950/20", border: "border-rose-200 dark:border-rose-800", text: "text-rose-700 dark:text-rose-400", fill: "#f43f5e" };
+      default:
+        return { bg: "bg-slate-50 dark:bg-slate-900", border: "border-slate-200 dark:border-slate-800", text: "text-slate-700 dark:text-slate-400", fill: "#64748b" };
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "Normal":
+        return "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30";
+      case "Borderline":
+        return "bg-yellow-50 text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400 border border-yellow-100 dark:border-yellow-900/30";
+      case "High":
+        return "bg-rose-50 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30";
+      case "Low":
+        return "bg-blue-50 text-blue-800 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30";
+      default:
+        return "bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-300";
+    }
+  };
+
+  const currentRisk = getRiskStyles(activeReport.analysis?.riskAssessment?.classification);
+
+  return (
+    <div className={`min-h-screen font-sans transition-all duration-300 ${isDarkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+      
+      {}
+      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/85 backdrop-blur-md px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-teal-600 p-2.5 rounded-xl text-white shadow-md shadow-teal-600/20 flex items-center justify-center">
+            <HeartPulse className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-black tracking-tight">MediNotes <span className="text-teal-600 dark:text-teal-400">LM</span></h1>
+              <span className="bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border border-teal-100 dark:border-teal-900/50">Notebook LLM</span>
+            </div>
+            <p className="text-xs text-slate-500">Multi-source clinical grounding workspace & AI chat companion</p>
+          </div>
+        </div>
+
+        {/* API key controller */}
+        <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2 text-xs bg-slate-100 dark:bg-slate-800/80 py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700">
+            <Shield className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+            <input 
+              type="password"
+              placeholder="API key auto-provided (or customize)"
+              className="bg-transparent border-none outline-none focus:ring-0 w-44 text-slate-700 dark:text-slate-200 text-xs placeholder:text-slate-400"
+              value={userApiKey}
+              onChange={(e) => setUserApiKey(e.target.value)}
+            />
+          </div>
+
+          <button 
+            onClick={() => setIsDarkMode(!isDarkMode)} 
+            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+          >
+            {isDarkMode ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+          </button>
+
+          <button 
+            onClick={() => window.print()} 
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition"
+          >
+            <Printer className="w-4 h-4" /> Print Workspace
+          </button>
+
+          <button 
+            onClick={() => setIsUploadModalOpen(true)}
+            className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition"
+          >
+            <Plus className="w-4 h-4" /> Add Medical Document
+          </button>
+        </div>
+      </header>
+
+      {/* Main Workspace Frame */}
+      <div className="max-w-[1680px] mx-auto grid grid-cols-1 xl:grid-cols-12 gap-5 p-5">
+        
+        {}
+        {/* Left column (col-span-3): Sources and active grounding */}
+        <div className="xl:col-span-3 space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-teal-600" /> Workspace Sources ({reports.length})
+              </h2>
+              <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded font-bold">
+                Ticked = Grounded
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto">
+              {reports.map((r) => {
+                const isActive = r.id === activeReportId;
+                const isGrounded = selectedReportIds.includes(r.id);
+                const riskStyles = getRiskStyles(r.analysis?.riskAssessment?.classification);
+                
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => setActiveReportId(r.id)}
+                    className={`group relative p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                      isActive 
+                        ? 'bg-teal-50/40 dark:bg-teal-950/20 border-teal-500 dark:border-teal-400/60 shadow-xs' 
+                        : 'bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/50 border-slate-200 dark:border-slate-800'
+                    }`}
+                  >
+                    <div 
+                      className="mt-1" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleGroundingSource(r.id);
+                      }}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={isGrounded}
+                        onChange={() => {}} // Controlled via onClick on div wrapper
+                        className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer h-4 w-4"
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-xs truncate flex items-center gap-1">
+                        {r.title}
+                        {isActive && <Bookmark className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0 fill-current" />}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1 text-[10px] text-slate-500 font-medium">
+                        <span className="truncate">{r.patientName}</span>
+                        <span>•</span>
+                        <span>{r.date}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase ${riskStyles.bg} ${riskStyles.text}`}>
+                          {r.analysis?.riskAssessment?.classification || "Unknown"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={(e) => removeReport(r.id, e)} 
+                      className="text-slate-400 hover:text-rose-500 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/30 transition absolute top-2 right-2 opacity-0 group-hover:opacity-100"
+                      title="Remove source"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button 
+              onClick={() => setIsUploadModalOpen(true)}
+              className="w-full mt-2 py-2 border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-teal-500 rounded-xl text-xs font-bold text-slate-500 hover:text-teal-600 flex items-center justify-center gap-2 transition"
+            >
+              <Plus className="w-4 h-4" /> Add another source
+            </button>
+          </div>
+
+          {/* Raw Text and Quick edit workspace */}
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col min-h-[280px]">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+              <div className="flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-teal-600" />
+                <span className="font-bold text-xs uppercase tracking-wider text-slate-400">Inspect Active Source</span>
+              </div>
+              
+              <button 
+                onClick={() => setEditSourceMode(!editSourceMode)}
+                className="text-xs flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition font-bold"
+              >
+                {editSourceMode ? <><Check className="w-3.5 h-3.5 text-emerald-600" /> Save</> : <><Edit2 className="w-3.5 h-3.5" /> Edit</>}
+              </button>
+            </div>
+
+            {editSourceMode ? (
+              <div className="flex-1 flex flex-col gap-2">
+                <textarea
+                  className="w-full flex-1 p-3 text-xs bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 font-mono focus:ring-1 focus:ring-teal-500 focus:outline-none resize-none min-h-[160px]"
+                  value={activeReport.rawText}
+                  onChange={(e) => {
+                    const text = e.target.value;
+                    setReports(prev => prev.map(r => r.id === activeReportId ? { ...r, rawText: text } : r));
+                  }}
+                />
+                <p className="text-[10px] text-slate-400">Updating report source values allows you to recalculate clinical intelligence using your API key.</p>
+              </div>
+            ) : (
+              <div className="flex-1 bg-slate-50/50 dark:bg-slate-950/50 p-3 rounded-xl text-xs font-mono whitespace-pre-wrap overflow-y-auto leading-relaxed text-slate-600 dark:text-slate-300 max-h-[300px]">
+                {activeReport.rawText}
+              </div>
+            )}
+            
+            <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[10px] text-slate-400 font-medium">
+              <span>Facility: {activeReport.facility}</span>
+              <span>Patient: {activeReport.patientName}</span>
+            </div>
+          </div>
+        </div>
+
+        {}
+        {/* Middle column (col-span-5): Beautiful clinical report analytical view */}
+        <div className="xl:col-span-5 space-y-4">
+          
+          {/* Active Record info Header */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-extrabold">{activeReport.title}</h3>
+                <span className="bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 text-[10px] px-2 py-0.5 rounded-full font-black uppercase border border-teal-100 dark:border-teal-900/40">
+                  {activeReport.analysis?.reportOverview?.reportType || "Clinical Assay"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Facility: {activeReport.analysis?.reportOverview?.facility} | Patient: {activeReport.analysis?.reportOverview?.patientName}
+              </p>
+            </div>
+
+            <div className={`px-4 py-2.5 rounded-xl border flex items-center gap-2.5 ${currentRisk.bg} ${currentRisk.border}`}>
+              <AlertCircle className={`w-5 h-5 ${currentRisk.text}`} />
+              <div>
+                <div className="text-[9px] uppercase font-bold text-slate-400">Risk Severity</div>
+                <div className={`text-xs font-black tracking-wide ${currentRisk.text}`}>{activeReport.analysis?.riskAssessment?.classification}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sub-Tabs selection */}
+          <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto gap-1 no-scrollbar">
+            {[
+              { id: 'summary', label: 'Overview & Highlights', icon: Activity },
+              { id: 'tests', label: 'Biomarker Matrix', icon: Book },
+              { id: 'abnormal', label: 'Abnormal Findings', icon: AlertTriangle },
+              { id: 'lifestyle', label: 'Lifestyle & Care', icon: UserCheck },
+              { id: 'glossary', label: 'Medical Glossary', icon: Info }
+            ].map((tab) => {
+              const IsActive = activeTab === tab.id;
+              const IconComponent = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-bold text-xs whitespace-nowrap transition-all ${
+                    IsActive 
+                      ? 'border-teal-500 text-teal-600 dark:text-teal-400' 
+                      : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <IconComponent className="w-4 h-4" /> {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sub-Tab content routing */}
+          <div className="min-h-[450px]">
+            
+            {/* SUB-TAB: Overview / Executive Summary */}
+            {activeTab === 'summary' && (
+              <div className="space-y-4">
+                
+                {/* Executive Summary list */}
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" /> Executive Highlights Summary
+                  </h3>
+                  <div className="space-y-2.5">
+                    {activeReport.analysis?.executiveSummary?.map((item, idx) => (
+                      <div key={idx} className="flex gap-2.5 items-start bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border border-slate-100 dark:border-slate-800/40">
+                        <span className="w-5 h-5 shrink-0 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center font-bold text-xs">{idx + 1}</span>
+                        <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Risk Gauge widget and Confidence block */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  {/* Gauge */}
+                  <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center text-center">
+                    <span className="text-[10px] font-black uppercase text-slate-400 mb-3 block">Relative Risk Gauge</span>
+                    <div className="relative w-28 h-28 flex items-center justify-center">
+                      <svg className="w-full h-full transform -rotate-90">
+                        <circle cx="56" cy="56" r="46" stroke="#f1f5f9" strokeWidth="8" fill="none" className="dark:stroke-slate-800" />
+                        <circle 
+                          cx="56" cy="56" r="46" 
+                          stroke={currentRisk.fill} strokeWidth="8" fill="none"
+                          strokeDasharray="289"
+                          strokeDashoffset={
+                            activeReport.analysis?.riskAssessment?.classification === "Low Risk" ? "216" :
+                            activeReport.analysis?.riskAssessment?.classification === "Moderate Risk" ? "144" :
+                            activeReport.analysis?.riskAssessment?.classification === "High Risk" ? "72" : "0"
+                          }
+                          strokeLinecap="round"
+                          className="transition-all duration-1000 ease-out"
+                        />
+                      </svg>
+                      <div className="absolute flex flex-col items-center">
+                        <span className="text-[8px] font-bold text-slate-400">ASSESSMENT</span>
+                        <span className="text-[10px] font-black tracking-wide truncate max-w-[90px] text-center" style={{ color: currentRisk.fill }}>
+                          {activeReport.analysis?.riskAssessment?.classification}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Explanation card */}
+                  <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">Assessment Analysis</span>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        {activeReport.analysis?.riskAssessment?.explanation}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 p-2 rounded-lg border border-slate-100 dark:border-slate-850">
+                      <CheckCircle className="w-4 h-4 text-emerald-500" />
+                      <div className="text-[10px]">
+                        <span className="text-slate-400 font-bold">Confidence Rating:</span> <strong className="text-emerald-600 dark:text-emerald-400 font-black">{activeReport.analysis?.confidenceRating || "High"}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Translation translation */}
+                <div className="bg-gradient-to-r from-teal-500/5 to-cyan-500/5 dark:from-teal-950/10 dark:to-cyan-950/10 p-5 rounded-xl border border-teal-100 dark:border-teal-900/60">
+                  <h4 className="text-xs font-black text-teal-700 dark:text-teal-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Info className="w-4 h-4" /> Patient-Friendly Translation
+                  </h4>
+                  <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                    {activeReport.analysis?.clinicalInterpretation}
+                  </p>
+                </div>
+
+              </div>
+            )}
+
+            {}
+            {activeTab === 'tests' && (
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Diagnostic Parameters ({activeReport.analysis?.testResults?.length || 0})</h3>
+                    <p className="text-[10px] text-slate-400">Direct extracted parameters mapped back to clinical standards</p>
+                  </div>
+
+                  <div className="flex gap-1.5 text-[9px]">
+                    <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 font-black border border-rose-100 dark:border-rose-900/30">
+                      Abnormal: {activeReport.analysis?.testResults?.filter(t => t.status !== 'Normal').length}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-black border border-emerald-100 dark:border-emerald-900/30">
+                      Normal: {activeReport.analysis?.testResults?.filter(t => t.status === 'Normal').length}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 text-[10px] font-black text-slate-400 uppercase">
+                        <th className="p-3">Assay Parameter</th>
+                        <th className="p-3 text-center">Result</th>
+                        <th className="p-3 text-center">Reference Targets</th>
+                        <th className="p-3 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-xs divide-y divide-slate-100 dark:divide-slate-800">
+                      {activeReport.analysis?.testResults?.map((test, idx) => {
+                        const isAbnormal = test.status !== 'Normal';
+                        return (
+                          <tr 
+                            key={idx} 
+                            className={`hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition ${
+                              isAbnormal ? 'bg-rose-500/[0.02] dark:bg-rose-500/[0.01]' : ''
+                            }`}
+                          >
+                            <td className="p-3 font-semibold text-slate-700 dark:text-slate-300">
+                              {test.parameter}
+                            </td>
+                            <td className="p-3 text-center font-mono font-extrabold">
+                              <span className={isAbnormal ? 'text-rose-600 dark:text-rose-400' : ''}>
+                                {test.result}
+                              </span>
+                            </td>
+                            <td className="p-3 text-center font-mono text-slate-400">
+                              {test.referenceRange}
+                            </td>
+                            <td className="p-3 text-center">
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase ${getStatusBadge(test.status)}`}>
+                                {test.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {}
+            {activeTab === 'abnormal' && (
+              <div className="space-y-4">
+                
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-rose-500" /> Key Abnormal Findings
+                  </h3>
+
+                  {activeReport.analysis?.keyAbnormalFindings?.length === 0 ? (
+                    <div className="text-center p-8 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
+                      <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
+                      <h4 className="font-bold text-xs text-slate-700 dark:text-slate-300">All Metrics Safe</h4>
+                      <p className="text-[10px] text-slate-400 mt-1">There are no highlighted critical values or out-of-range metrics in this report.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5">
+                      {activeReport.analysis?.keyAbnormalFindings?.map((finding, idx) => (
+                        <div key={idx} className="border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden shadow-xs">
+                          <div className="bg-slate-50 dark:bg-slate-950 px-4 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <span className="font-bold text-xs text-slate-700 dark:text-slate-300">{finding.testName}</span>
+                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
+                              Severity: {finding.severity}
+                            </span>
+                          </div>
+
+                          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <div className="space-y-1.5">
+                              <div>
+                                <span className="text-slate-400 font-medium">Extracted Result:</span> <strong className="text-rose-600 dark:text-rose-400 font-extrabold">{finding.result}</strong>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 font-medium">Reference Interval:</span> <span className="text-slate-500 font-semibold">{finding.normalRange}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 font-medium block">Associated Triggers:</span>
+                                <p className="text-slate-500 italic mt-0.5">{finding.possibleReasons}</p>
+                              </div>
+                            </div>
+
+                            <div className="border-t sm:border-t-0 sm:border-l border-slate-150 dark:border-slate-800 pt-3 sm:pt-0 sm:pl-4 space-y-1">
+                              <span className="text-[9px] font-black tracking-wide text-slate-400 uppercase block">Clinical Significance:</span>
+                              <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs">{finding.clinicalSignificance}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Healthy indicators list */}
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-1">
+                    <CheckCircle className="w-4 h-4 text-emerald-500" /> Preserved Normal Parameters
+                  </h4>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-500 list-disc pl-4">
+                    {activeReport.analysis?.normalFindings?.map((item, idx) => (
+                      <li key={idx} className="leading-relaxed">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+              </div>
+            )}
+
+            {}
+            {activeTab === 'lifestyle' && (
+              <div className="space-y-4">
+                
+                {/* Specialists panel */}
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                    <UserCheck className="w-4 h-4 text-teal-600" /> Recommended Specialists
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {activeReport.analysis?.recommendedSpecialists?.map((spec, idx) => (
+                      <div key={idx} className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="p-1 rounded bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                            <UserCheck className="w-4 h-4" />
+                          </span>
+                          <span className="font-extrabold text-xs text-slate-700 dark:text-slate-200">{spec.specialistName}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-relaxed">{spec.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lifestyle & Precautions */}
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                    <Activity className="w-4 h-4 text-teal-600" /> Grounded Lifestyle Adjustments
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {activeReport.analysis?.precautions && Object.entries(activeReport.analysis.precautions).map(([key, value]) => (
+                      <div key={key} className="p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <span className="text-[9px] font-black text-teal-600 dark:text-teal-400 uppercase tracking-widest block mb-1">
+                          {key.replace(/([A-Z])/g, ' $1').trim()}
+                        </span>
+                        <p className="text-xs text-slate-500 leading-relaxed">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Advisories */}
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs space-y-3">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                    <Shield className="w-4 h-4 text-teal-600" /> Action Advisories
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-slate-400 font-bold block">Follow-up Recommendation:</span>
+                        <p className="text-slate-500 mt-0.5">{activeReport.analysis?.advisory?.followUpRecommended}</p>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 font-bold block">Retesting Strategy:</span>
+                        <p className="text-slate-500 mt-0.5">{activeReport.analysis?.advisory?.repeatTestsNeeded}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-slate-400 font-bold block">Symptom Monitoring:</span>
+                        <p className="text-slate-500 mt-0.5">{activeReport.analysis?.advisory?.symptomMonitoring}</p>
+                      </div>
+                      <div className="p-2 bg-rose-500/[0.03] rounded border border-rose-100 dark:border-rose-950/30">
+                        <span className="text-rose-700 dark:text-rose-400 font-black block">Emergency Crisis Triggers:</span>
+                        <p className="text-rose-600 dark:text-rose-400 text-[11px] mt-0.5 leading-relaxed">{activeReport.analysis?.advisory?.urgentEvaluationAdvisable}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {}
+            {activeTab === 'glossary' && (
+              <div className="space-y-4">
+                
+                {/* Glossary terms finder */}
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Medical Glossary Explained</h3>
+                      <p className="text-[10px] text-slate-400">Demystifying technical diagnostics inside your lab work</p>
+                    </div>
+
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
+                      <input 
+                        type="text" 
+                        placeholder="Search jargon terms..."
+                        className="pl-8 pr-3 py-1.5 w-full sm:w-48 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs outline-none focus:ring-1 focus:ring-teal-500"
+                        value={glossarySearch}
+                        onChange={(e) => setGlossarySearch(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {activeReport.analysis?.medicalTermsExplained
+                      ?.filter(item => item.term.toLowerCase().includes(glossarySearch.toLowerCase()))
+                      .map((item, idx) => (
+                        <div key={idx} className="p-3 rounded-lg bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-850">
+                          <strong className="text-xs text-teal-600 dark:text-teal-400 font-bold block mb-1">{item.term}</strong>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">{item.explanation}</p>
+                        </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Doctor's appointment questions planner */}
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                    <HelpCircle className="w-4 h-4 text-teal-600" /> Prepare Questions For Your Doctor
+                  </h3>
+                  <div className="space-y-2">
+                    {activeReport.analysis?.questionsForDoctor?.map((item, idx) => (
+                      <div key={idx} className="flex gap-2 items-center p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-850/50 text-xs">
+                        <ArrowRight className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
+                        <span className="text-slate-600 dark:text-slate-300">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+          </div>
+
+          {}
+          {/* Quick One Minute summary bar */}
+          <div className="bg-gradient-to-r from-teal-600 to-cyan-700 text-white p-5 rounded-xl shadow-md">
+            <h4 className="text-xs font-black uppercase tracking-wider mb-2 flex items-center gap-1">
+              <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" /> 1-Minute Diagnostic Digest
+            </h4>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] leading-relaxed">
+              <div>
+                <span className="text-teal-100 font-bold block">Status Summary:</span>
+                <span className="font-extrabold">{activeReport.analysis?.oneMinuteSummary?.overallHealthStatus || "Analyzing..."}</span>
+              </div>
+              <div>
+                <span className="text-teal-100 font-bold block">Primary Concerns:</span>
+                <span className="font-extrabold">{activeReport.analysis?.oneMinuteSummary?.immediateConcerns || "None specified"}</span>
+              </div>
+              <div>
+                <span className="text-teal-100 font-bold block">Immediate Action:</span>
+                <span className="font-extrabold">{activeReport.analysis?.oneMinuteSummary?.keyPrecautions || "None"}</span>
+              </div>
+              <div>
+                <span className="text-teal-100 font-bold block">Follow-upRetest:</span>
+                <span className="font-extrabold">{activeReport.analysis?.oneMinuteSummary?.suggestedFollowUp || "In 12 weeks"}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {}
+        {/* Right column (col-span-4): Notebook clinical interactive chat */}
+        <div className="xl:col-span-4 flex flex-col gap-4">
+          
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-[650px] overflow-hidden">
+            
+            {/* Header indicator */}
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <span className="text-xs font-black uppercase tracking-wide">Workspace AI Chat Companion</span>
+              </div>
+
+              <div className="flex items-center gap-1 bg-teal-50 dark:bg-teal-950/30 border border-teal-100 dark:border-teal-900/40 text-teal-700 dark:text-teal-400 text-[10px] px-2.5 py-0.5 rounded-full font-black">
+                <Layers className="w-3.5 h-3.5" /> Grounded: {selectedReportIds.length} sources
+              </div>
+            </div>
+
+            {/* Chat list block */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              {chatMessages.map((msg, idx) => (
+                <div 
+                  key={idx} 
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[90%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+                    msg.role === 'user' 
+                      ? 'bg-teal-600 text-white rounded-br-none shadow-sm font-semibold' 
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-none border border-slate-200/50 dark:border-slate-700/50'
+                  }`}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+
+              {isChatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-bl-none p-3 text-xs flex items-center gap-2 border border-slate-200/40 dark:border-slate-700/40">
+                    <span className="w-2 h-2 rounded-full bg-teal-600 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-teal-600 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-teal-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Preconfigured helper prompt suggestions chips */}
+            <div className="p-3 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/10 flex flex-wrap gap-1.5">
+              {[
+                { label: "Summarize critical abnormal metrics", query: "Can you provide a summarized overview of all abnormal out-of-range clinical metrics across all selected sources?" },
+                { label: "Prepare questions for doctor", query: "Can you draft high-value consultation questions to discuss with my primary physician regarding these findings?" },
+                { label: "Explain metabolic issues", query: "What do AST, ALT, and glucose levels indicate about metabolic and liver health?" }
+              ].map((chip, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => runPromptSuggestion(chip.query)}
+                  className="text-[10px] bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700/50 transition truncate max-w-full text-left block"
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Chat field */}
+            <form onSubmit={handleChatQuery} className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Query your active grounding sources..."
+                className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none placeholder:text-slate-400"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+              />
+              <button 
+                type="submit"
+                disabled={isChatLoading || !chatInput.trim()}
+                className="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow-xs flex items-center gap-1 disabled:opacity-50"
+              >
+                Send
+              </button>
+            </form>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full border border-slate-200 dark:border-slate-800 p-5 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-teal-600" />
+                <h3 className="font-extrabold text-sm uppercase tracking-wide">Import Medical Document</h3>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsUploadModalOpen(false);
+                  setApiError('');
+                }}
+                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Simulated samples helper */}
+            <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl flex items-center justify-between gap-3 flex-wrap">
+              <div className="text-[11px] text-slate-500">
+                <strong className="text-slate-700 dark:text-slate-300">Quick Demo Testing:</strong> Don't have a report handy? Click load sample to auto-fill a thyroid assay panel.
+              </div>
+              <button 
+                type="button"
+                onClick={loadSimulatedLabSample}
+                className="px-3 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-400 rounded text-[10px] font-extrabold transition border border-teal-100 dark:border-teal-900/50"
+              >
+                Load Thyroid Assay Panel
+              </button>
+            </div>
+
+            {/* Error alerts */}
+            {apiError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 dark:bg-rose-950/20 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs rounded-xl flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p className="leading-relaxed">{apiError}</p>
+              </div>
+            )}
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!customReportText.trim()) return;
+              runAIDocumentAnalysis(customReportText, customReportTitle, customPatient, customDate, customFacility);
+            }} className="space-y-3.5 text-xs">
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-bold uppercase text-[9px] mb-1">Patient Name</label>
+                  <input 
+                    type="text"
+                    required
+                    className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-1 focus:ring-teal-500"
+                    value={customPatient}
+                    onChange={(e) => setCustomPatient(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-bold uppercase text-[9px] mb-1">Assay/Report Date</label>
+                  <input 
+                    type="date"
+                    required
+                    className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-1 focus:ring-teal-500"
+                    value={customDate}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-bold uppercase text-[9px] mb-1">Laboratory / Clinic</label>
+                  <input 
+                    type="text"
+                    required
+                    className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-1 focus:ring-teal-500"
+                    value={customFacility}
+                    onChange={(e) => setCustomFacility(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-bold uppercase text-[9px] mb-1">Report Record Title</label>
+                  <input 
+                    type="text"
+                    required
+                    className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-1 focus:ring-teal-500"
+                    value={customReportTitle}
+                    onChange={(e) => setCustomReportTitle(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-bold uppercase text-[9px] mb-1">Paste Raw Clinical Text Findings</label>
+                <textarea 
+                  required
+                  placeholder="Paste or drop raw clinical metrics here... (ex: TSH: 5.8 mIU/L [HIGH], AST: 62 IU/L, etc.)"
+                  className="w-full h-32 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg font-mono outline-none focus:ring-1 focus:ring-teal-500 resize-none placeholder:text-slate-400"
+                  value={customReportText}
+                  onChange={(e) => setCustomReportText(e.target.value)}
+                />
+              </div>
+
+              <button 
+                type="submit"
+                disabled={isGenerating || !customReportText.trim()}
+                className="w-full bg-teal-600 hover:bg-teal-500 text-white font-extrabold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {isGenerating ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Synthesizing Structured Medical Records...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" /> Run Structured Document Analysis
+                  </>
+                )}
+              </button>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
